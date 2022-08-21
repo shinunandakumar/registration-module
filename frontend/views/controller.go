@@ -83,6 +83,7 @@ func profileHandler(response http.ResponseWriter, request *http.Request) {
 			"email":     request.FormValue("email"),
 		})
 		URL := backendProfileRouter + userName
+		fmt.Println("-----------------profileHandler--POST------------------------", string(postBody))
 		_, err := handleRequest(response, request, URL, "POST", postBody)
 		if err != nil {
 			handleError(response, err)
@@ -122,8 +123,9 @@ func internalPageHandler(response http.ResponseWriter, request *http.Request) {
 }
 
 func signupHandler(response http.ResponseWriter, request *http.Request) {
+	username := request.FormValue("user_name")
 	postBody, err := json.Marshal(map[string]string{
-		"user_name": request.FormValue("user_name"),
+		"user_name": username,
 		"password":  request.FormValue("password"),
 	})
 	if err != nil {
@@ -135,6 +137,7 @@ func signupHandler(response http.ResponseWriter, request *http.Request) {
 		handleError(response, err)
 	}
 	redirectTarget := frontendProfileinRouter
+	setSession(username, response)
 	http.Redirect(response, request, redirectTarget, http.StatusFound)
 }
 
@@ -208,7 +211,7 @@ func handleRequest(response http.ResponseWriter, request *http.Request, URL stri
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.SetBasicAuth(basicAuthUsername, basicAuthPassowrd)
-	fmt.Println("Sending request to ", URL)
+	fmt.Println("Sending request to ", URL, "Method : ", method)
 	resp, err := client.Do(req)
 	//Handle Error
 	if err != nil {
@@ -222,6 +225,7 @@ func handleRequest(response http.ResponseWriter, request *http.Request, URL stri
 		log.Fatalln(err)
 		return "", err
 	}
+	fmt.Println("Backend request response is ", string(body))
 	return string(body), nil
 
 }
