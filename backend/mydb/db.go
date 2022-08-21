@@ -24,7 +24,9 @@ func Automigrate(db *sql.DB) {
 		(
 			id SERIAL,
 			username CHAR(255),
+			name CHAR(255) NULL,
 			email CHAR(255),
+			phone CHAR(255) NULL,
 			password CHAR(255)
 		)`
 	_ = db.QueryRow(tableCreationQuery)
