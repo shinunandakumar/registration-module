@@ -25,7 +25,7 @@ func Automigrate(db *sql.DB) {
 			id SERIAL,
 			username CHAR(255),
 			name CHAR(255) NULL,
-			email CHAR(255),
+			email CHAR(255) NULL,
 			phone CHAR(255) NULL,
 			password CHAR(255)
 		)`

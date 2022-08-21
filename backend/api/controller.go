@@ -53,10 +53,9 @@ func Register(rw http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(rw).Encode(response)
 		return
 	}
-
 	var err error
 	passwordHash, _ := HashPassword(user.Password)
-	statement := fmt.Sprintf("INSERT INTO users (username,email,password) VALUES ('%s','%s','%s')", user.Username, user.Email, passwordHash)
+	statement := fmt.Sprintf("INSERT INTO users (username,password) VALUES ('%s','%s')", user.Username, passwordHash)
 	_, err = db.Exec(statement)
 
 	if err != nil {

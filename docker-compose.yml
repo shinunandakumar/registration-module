@@ -40,5 +40,6 @@ services:
     command: go run main.go
     ports:
       - 8000:8000
+    network_mode: "host"
     depends_on:
       - db
