@@ -26,14 +26,19 @@ func main() {
 	router.HandleFunc("/", indexPageHandler)
 	router.HandleFunc("/internal", internalPageHandler)
 	router.HandleFunc("/login", loginHandler).Methods("POST")
-	router.HandleFunc("/signup", signupHandler).Methods("POST")
-	router.HandleFunc("/profile", profileHandler)
-	router.HandleFunc("/profile", profileHandler).Methods("POST")
-	router.HandleFunc("/logout", logoutHandler).Methods("POST")
+	router.HandleFunc("/signup", signupHandler).Methods("GET", "POST")
+	router.HandleFunc("/profile", profileHandler).Methods("GET", "POST")
+	router.HandleFunc("/logout", logoutHandler).Methods("GET", "POST")
 
 	http.Handle("/", router)
 	fmt.Println("Port Listening:8000")
 	http.ListenAndServe(":8000", nil)
+}
+
+type UserData struct {
+	Name      string
+	Telephone string
+	Email     string
 }
 
 type form_method struct {
@@ -43,6 +48,7 @@ type form_method struct {
 	SignupAction  string
 	ProfileAction string
 	ProfileMethod string
+	ProfileData   UserData
 }
 
 func indexPageHandler(response http.ResponseWriter, request *http.Request) {
@@ -58,16 +64,52 @@ func indexPageHandler(response http.ResponseWriter, request *http.Request) {
 
 func profileHandler(response http.ResponseWriter, request *http.Request) {
 	if request.Method == "GET" {
+		userName := getUserName(request)
+		fmt.Println("----------Profile-GET----------------------", userName)
+		if userName == "" {
+			http.Redirect(response, request, "/", http.StatusFound)
+		}
+
+		URL := fmt.Sprintf("http://127.0.0.0:8004/profile/%s", userName)
+		resp, _ := handleRequest(request, URL, "GET", nil)
+		fmt.Println("-----------------------", resp)
+
+		var jsonMap map[string]string
+		err := json.Unmarshal([]byte(resp), &jsonMap)
+		if err != nil {
+			fmt.Println("----------err-------------", jsonMap)
+		}
 		parsedTemplate, _ := template.ParseFiles("public/profile.html")
-		form := form_method{ProfileMethod: "POST", ProfileAction: "/profile"}
-		err := parsedTemplate.Execute(response, form)
+		profile := UserData{Name: jsonMap["name"], Telephone: jsonMap["telephone"], Email: jsonMap["email"]}
+		form := form_method{ProfileMethod: "POST", ProfileAction: "/profile", ProfileData: profile}
+		err = parsedTemplate.Execute(response, form)
 		if err != nil {
 			fmt.Println("Error executing template :", err)
 			log.Println("Error executing template :", err)
 			return
 		}
 	} else {
-		return
+		fmt.Println("--------------nasdasd------------------", request.FormValue("name"))
+		userName := getUserName(request)
+		// if userName != "" {
+		// 	fmt.Fprintf(response, internalPage, userName)
+		// } else {
+		// 	http.Redirect(response, request, "/", http.StatusFound)
+		// }
+
+		postBody, _ := json.Marshal(map[string]string{
+			"name":      request.FormValue("name"),
+			"telephone": request.FormValue("telephone"),
+			"email":     request.FormValue("email"),
+		})
+		fmt.Println("--------------nasdasd------------------", string(postBody))
+		URL := fmt.Sprintf("http://127.0.0.0:8004/profile/%s", userName)
+		resp, err := handleRequest(request, URL, "POST", postBody)
+		if err != nil {
+			fmt.Println("--------err---------", resp, err)
+		}
+		redirectTarget := "/profile"
+		http.Redirect(response, request, redirectTarget, http.StatusFound)
 	}
 }
 
@@ -85,14 +127,13 @@ func internalPageHandler(response http.ResponseWriter, request *http.Request) {
 	if userName != "" {
 		fmt.Fprintf(response, internalPage, userName)
 	} else {
-		http.Redirect(response, request, "/", 302)
+		http.Redirect(response, request, "/", http.StatusFound)
 	}
 }
 
 func signupHandler(response http.ResponseWriter, request *http.Request) {
 	postBody, err := json.Marshal(map[string]string{
 		"user_name": request.FormValue("user_name"),
-		"email":     request.FormValue("email"),
 		"password":  request.FormValue("password"),
 	})
 	if err != nil {
@@ -100,39 +141,41 @@ func signupHandler(response http.ResponseWriter, request *http.Request) {
 	}
 	URL := "http://127.0.0.0:8004/register"
 	resp, err := handleRequest(request, URL, "POST", postBody)
+	fmt.Println("--------err---------", resp)
 	if err != nil {
-		fmt.Println("--------err---------", err)
+		fmt.Println("--------err---------", resp, err)
 	}
-	fmt.Println("--------resp---------", resp)
 	redirectTarget := "/profile"
-	http.Redirect(response, request, redirectTarget, 302)
+	http.Redirect(response, request, redirectTarget, http.StatusFound)
 }
 
 func loginHandler(response http.ResponseWriter, request *http.Request) {
-	name := request.FormValue("name")
-	pass := request.FormValue("password")
-	fmt.Println("-------request.FormValue--asd---------", request.Form)
+	if request.Method == "POST" {
+		username := request.FormValue("user_name")
+		pass := request.FormValue("password")
+		fmt.Println("-------request.FormValue--asd---------", request.Form)
 
-	body, _ := json.Marshal(map[string]string{
-		"user_name": "Test",
-		"email":     "test@gmail.com",
-		"password":  "password",
-	})
-	URL := "http://127.0.0.0:8004/register"
-	resp, err := handleRequest(request, URL, "POST", body)
-	fmt.Println("--------handleRequest---------------", resp, err)
-	redirectTarget := "/"
-	if name != "" && pass != "" {
+		body, _ := json.Marshal(map[string]string{
+			"user_name": username,
+			"password":  pass,
+		})
+		URL := "http://127.0.0.0:8004/login"
+		resp, err := handleRequest(request, URL, "POST", body)
+		fmt.Println("--------handleRequest---------------", resp, err)
+		redirectTarget := "/profile"
+		if err != nil {
+			redirectTarget = "/internal"
+		}
 		// .. check credentials ..
-		setSession(name, response)
-		redirectTarget = "/internal"
+		setSession(username, response)
+		fmt.Println("------Usernam--------", getUserName(request))
+		http.Redirect(response, request, redirectTarget, http.StatusFound)
 	}
-	http.Redirect(response, request, redirectTarget, 302)
 }
 
 func logoutHandler(response http.ResponseWriter, request *http.Request) {
 	clearSession(response)
-	http.Redirect(response, request, "/", 302)
+	http.Redirect(response, request, "/", http.StatusFound)
 }
 
 func setSession(userName string, response http.ResponseWriter) {
@@ -172,7 +215,6 @@ func clearSession(response http.ResponseWriter) {
 func handleRequest(request *http.Request, URL string, method string, data []byte) (response string, err error) {
 
 	responseBody := bytes.NewBuffer(data)
-	fmt.Println("-----------------data-------------------", string(data))
 	client := &http.Client{}
 	req, err := http.NewRequest(method, URL, responseBody)
 	if err != nil {

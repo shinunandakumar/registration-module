@@ -9,33 +9,22 @@
 
         <div class="form-container sign-in-container">
             
-            <form action="{{.ProfileAction}}" method="{{.ProfileMethod}}">
+            <form action="{{.ProfileMethod}}" method="{{.ProfileAction}}">
                 <h1>User Profile</h1>
                 <span>Enter user profile details</span>
-                {{ if .ProfileData}}
-                    <input type="name" id="name" name="name" required aria-required="true" placeholder="Name">
-                    <input type="telephone" id="telephone" name="telephone" required aria-required="true" placeholder="Telephone">
-                    <input type="email" id="email" name="email" required aria-required="true" placeholder="Email">
-                {{else}}
-                    <input type="name" id="name" name="name" required aria-required="true" placeholder="Name">
-                    <input type="telephone" id="telephone" name="telephone" required aria-required="true" placeholder="Telephone">
-                    <input type="email" id="email" name="email" required aria-required="true" placeholder="Email">
-                {{ end }}
+                <input type="name" id="name" name="name" placeholder="Name">
+                <input type="telephone" id="telephone" name="telephone" placeholder="Telephone">
+                <input type="email" id="email" name="email" placeholder="Email">
                 <span></span>
                 <button type="submit">Save and Continue</button>
                 <span></span>
-                <!-- <button type="cancel" id="cancel" onclick="history.back(-1)">Cancel</button> -->
-                <input type="button" value="Cancel" id="cancel" onclick="history.back(-1)" />
+                <button type="cancel">Cancel</button>
             </form>
         </div>
 
     </div>
 
 <script>
-    // const cancelButton = document.getElementById('cancel');
-    // cancelButton.addEventListener('click', () => {
-    //     var form = $(this);
-    // });
 </script>
 
 <style>
@@ -155,13 +144,9 @@
         z-index: 2;
     }
 
-    input[id=cancel]{
-        background-color: transparent;
-        color: #2e2c4e;
-        font-size: 12px;
-        font-weight: bold;
-        padding: 1px;
-        letter-spacing: 1px;
+    button[type=cancel]{
+        border: 1px solid #979191;
+        background-color: #979191;
     }
 </style>
 

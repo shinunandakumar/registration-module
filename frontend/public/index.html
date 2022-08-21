@@ -7,11 +7,12 @@
 			<div class="social-container">
 				<a href="#" class="social btn btn-danger"><i class="fa fa-google"></i>SignIn with Google</a>
 			</div>
-			<span>or use your email for registration</span>
+			<span>Enter your details here</span>
 			<input type="text" id="user_name" name="user_name" placeholder="Name" />
-			<input type="email" id="email" name="email" placeholder="Email" />
+			<!-- <input type="email" id="email" name="email" placeholder="Email" /> -->
 			<input type="password" id="password" name="password" placeholder="Password" />
-			<button type="submit">Sign Up</button>
+			<input type="password" id="password2" name="password2" placeholder="Confirm Password" />
+			<button type="submit" id="submit-signup">Sign Up</button>
 		</form>
 	</div>
 	<div class="form-container sign-in-container">
@@ -21,9 +22,9 @@
 				<a href="#" class="social btn btn-danger"><i class="fa fa-google"></i>SignIn with Google</a>
 			</div>
 			<span>or use your account</span>
-			<input type="email" id="email" name="email" placeholder="Email" value="" />
+			<input type="user_name" id="user_name" name="user_name" placeholder="Username" />
 			<input type="password" id="password" name="password" placeholder="Password" />
-			<button type="submit">Sign In</button>
+			<button type="submit" id="submit-signin">Sign In</button>
 		</form>
 	</div>
 	<div class="overlay-container">
@@ -44,8 +45,18 @@
 
 <script>
     const signUpButton = document.getElementById('signUp');
+    const signUpSubmitButton = document.getElementById('submit-signup');
+    const signInSubmitButton = document.getElementById('submit-signin');
 	const signInButton = document.getElementById('signIn');
 	const container = document.getElementById('container');
+
+	signUpSubmitButton.addEventListener('click', () => {
+		var pass = document.getElementById('password').value
+		var pass2 = document.getElementById('password2').value
+		if (pass != pass2) {
+			alert("Password do not match.")
+		}
+	});
 
 	signUpButton.addEventListener('click', () => {
 		container.classList.add("right-panel-active");
