@@ -63,8 +63,9 @@ func profileHandler(response http.ResponseWriter, request *http.Request) {
 		if err != nil {
 			handleError(response, err)
 		}
+		fmt.Println("resp----------", jsonMap, resp)
 		parsedTemplate, _ := template.ParseFiles("public/profile.html")
-		profile := UserData{Name: jsonMap["name"], Telephone: jsonMap["telephone"], Email: jsonMap["email"]}
+		profile := UserData{Name: jsonMap["name"], Telephone: jsonMap["phone"], Email: jsonMap["email"]}
 		form := form_method{ProfileMethod: "POST", ProfileAction: frontendProfileinRouter, ProfileData: profile}
 		err = parsedTemplate.Execute(response, form)
 		if err != nil {
@@ -78,9 +79,9 @@ func profileHandler(response http.ResponseWriter, request *http.Request) {
 		}
 
 		postBody, _ := json.Marshal(map[string]string{
-			"name":      request.FormValue("name"),
-			"telephone": request.FormValue("telephone"),
-			"email":     request.FormValue("email"),
+			"name":  request.FormValue("name"),
+			"phone": request.FormValue("telephone"),
+			"email": request.FormValue("email"),
 		})
 		URL := backendProfileRouter + userName
 		fmt.Println("-----------------profileHandler--POST------------------------", string(postBody))

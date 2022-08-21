@@ -130,7 +130,6 @@ func profile(rw http.ResponseWriter, r *http.Request) {
 		}
 		return
 	} else {
-
 		//validate the request body
 		if err := json.NewDecoder(r.Body).Decode(&userprofile); err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
@@ -141,17 +140,17 @@ func profile(rw http.ResponseWriter, r *http.Request) {
 		// Validation #TODO
 		extra_update_q := ""
 		if userprofile.Name != "" {
-			extra_update_q += fmt.Sprint("name = '%s' ", userprofile.Name)
+			extra_update_q += fmt.Sprintf(" name = '%s',", userprofile.Name)
 		}
 		if userprofile.Phone != "" {
-			extra_update_q += fmt.Sprint("phone = '%s' ", userprofile.Phone)
+			extra_update_q += fmt.Sprintf(" phone = '%s',", userprofile.Phone)
 		}
 		if userprofile.Email != "" {
-			extra_update_q += fmt.Sprint("email = '%s' ", userprofile.Email)
+			extra_update_q += fmt.Sprintf(" email = '%s' ", userprofile.Email)
 		}
 		if extra_update_q != "" {
 
-			statement := "UPDATE users SET " + extra_update_q
+			statement := "UPDATE users SET " + extra_update_q + fmt.Sprintf("WHERE username = '%s'", username)
 			_, err = db.Exec(statement)
 			rw.WriteHeader(http.StatusCreated)
 			response = JsonResponse{Status: http.StatusCreated, Message: "Profile Updated", Error: err}
