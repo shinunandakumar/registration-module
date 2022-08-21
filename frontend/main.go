@@ -17,20 +17,35 @@ var cookieHandler = securecookie.New(
 	securecookie.GenerateRandomKey(64),
 	securecookie.GenerateRandomKey(32))
 
-// ..
+var (
+	// Frontend Routers
+	frontendDefaultRouter   = "/"
+	frontendLoginRouter     = "/login"
+	frontendInternalRouter  = "/internal"
+	frontendSignupRouter    = "/signup"
+	frontendProfileinRouter = "/profile"
+	frontendLogoutRouter    = "/logout"
 
-var router = mux.NewRouter()
+	// Backend Routers
+	backendUrl            = "http://localhost:8004"
+	basicAuthUsername     = "test"
+	basicAuthPassowrd     = "test"
+	backendLoginRouter    = fmt.Sprintf("%s/login", backendUrl)
+	backendRegisterRouter = fmt.Sprintf("%s/register", backendUrl)
+	backendProfileRouter  = fmt.Sprintf("%s/profile/", backendUrl)
+)
 
 func main() {
 
-	router.HandleFunc("/", indexPageHandler)
-	router.HandleFunc("/internal", internalPageHandler)
-	router.HandleFunc("/login", loginHandler).Methods("POST")
-	router.HandleFunc("/signup", signupHandler).Methods("GET", "POST")
-	router.HandleFunc("/profile", profileHandler).Methods("GET", "POST")
-	router.HandleFunc("/logout", logoutHandler).Methods("GET", "POST")
+	var router = mux.NewRouter()
+	router.HandleFunc(frontendDefaultRouter, indexPageHandler)
+	router.HandleFunc(frontendInternalRouter, internalPageHandler)
+	router.HandleFunc(frontendLoginRouter, loginHandler).Methods("POST")
+	router.HandleFunc(frontendSignupRouter, signupHandler).Methods("GET", "POST")
+	router.HandleFunc(frontendProfileinRouter, profileHandler).Methods("GET", "POST")
+	router.HandleFunc(frontendLogoutRouter, logoutHandler).Methods("GET", "POST")
 
-	http.Handle("/", router)
+	http.Handle(frontendDefaultRouter, router)
 	fmt.Println("Port Listening:8000")
 	http.ListenAndServe(":8000", nil)
 }
@@ -48,68 +63,75 @@ type form_method struct {
 	SignupAction  string
 	ProfileAction string
 	ProfileMethod string
+	FormError     string
 	ProfileData   UserData
 }
 
 func indexPageHandler(response http.ResponseWriter, request *http.Request) {
 	parsedTemplate, _ := template.ParseFiles("public/index.html")
-	form := form_method{LoginMethod: "POST", LoginAction: "/login", SignupMethod: "POST", SignupAction: "/signup"}
+	form := form_method{LoginMethod: "POST", LoginAction: frontendLoginRouter, SignupMethod: "POST", SignupAction: frontendSignupRouter}
 	err := parsedTemplate.Execute(response, form)
 	if err != nil {
 		log.Println("Error executing template :", err)
 		return
 	}
-	// fmt.Fprintf(response, indexPage)
 }
 
 func profileHandler(response http.ResponseWriter, request *http.Request) {
 	if request.Method == "GET" {
 		userName := getUserName(request)
-		fmt.Println("----------Profile-GET----------------------", userName)
 		if userName == "" {
-			http.Redirect(response, request, "/", http.StatusFound)
+			http.Redirect(response, request, frontendDefaultRouter, http.StatusFound)
 		}
 
-		URL := fmt.Sprintf("http://127.0.0.0:8004/profile/%s", userName)
-		resp, _ := handleRequest(request, URL, "GET", nil)
-		fmt.Println("-----------------------", resp)
+		URL := backendProfileRouter + userName
+		resp, err := handleRequest(response, request, URL, "GET", nil)
+		if err != nil {
+			handleError(response, err)
+		}
 
 		var jsonMap map[string]string
-		err := json.Unmarshal([]byte(resp), &jsonMap)
+		err = json.Unmarshal([]byte(resp), &jsonMap)
 		if err != nil {
-			fmt.Println("----------err-------------", jsonMap)
+			handleError(response, err)
 		}
 		parsedTemplate, _ := template.ParseFiles("public/profile.html")
 		profile := UserData{Name: jsonMap["name"], Telephone: jsonMap["telephone"], Email: jsonMap["email"]}
-		form := form_method{ProfileMethod: "POST", ProfileAction: "/profile", ProfileData: profile}
+		form := form_method{ProfileMethod: "POST", ProfileAction: frontendProfileinRouter, ProfileData: profile}
 		err = parsedTemplate.Execute(response, form)
 		if err != nil {
-			fmt.Println("Error executing template :", err)
 			log.Println("Error executing template :", err)
 			return
 		}
 	} else {
-		fmt.Println("--------------nasdasd------------------", request.FormValue("name"))
 		userName := getUserName(request)
-		// if userName != "" {
-		// 	fmt.Fprintf(response, internalPage, userName)
-		// } else {
-		// 	http.Redirect(response, request, "/", http.StatusFound)
-		// }
+		if userName != "" {
+			http.Redirect(response, request, frontendDefaultRouter, http.StatusFound)
+		}
 
 		postBody, _ := json.Marshal(map[string]string{
 			"name":      request.FormValue("name"),
 			"telephone": request.FormValue("telephone"),
 			"email":     request.FormValue("email"),
 		})
-		fmt.Println("--------------nasdasd------------------", string(postBody))
-		URL := fmt.Sprintf("http://127.0.0.0:8004/profile/%s", userName)
-		resp, err := handleRequest(request, URL, "POST", postBody)
+		URL := backendProfileRouter + userName
+		_, err := handleRequest(response, request, URL, "POST", postBody)
 		if err != nil {
-			fmt.Println("--------err---------", resp, err)
+			handleError(response, err)
 		}
 		redirectTarget := "/profile"
 		http.Redirect(response, request, redirectTarget, http.StatusFound)
+	}
+}
+
+func handleError(response http.ResponseWriter, err error) {
+	parsedTemplate, _ := template.ParseFiles("public/error_page.html")
+	error_messege := form_method{FormError: fmt.Sprintf("%v", err)}
+	fmt.Println("-------------error_messege--------------", error_messege)
+	err = parsedTemplate.Execute(response, error_messege)
+	if err != nil {
+		log.Println("Error executing template :", err)
+		return
 	}
 }
 
@@ -127,7 +149,7 @@ func internalPageHandler(response http.ResponseWriter, request *http.Request) {
 	if userName != "" {
 		fmt.Fprintf(response, internalPage, userName)
 	} else {
-		http.Redirect(response, request, "/", http.StatusFound)
+		http.Redirect(response, request, frontendDefaultRouter, http.StatusFound)
 	}
 }
 
@@ -137,15 +159,14 @@ func signupHandler(response http.ResponseWriter, request *http.Request) {
 		"password":  request.FormValue("password"),
 	})
 	if err != nil {
-		fmt.Println("Can't serislize", request.Form)
+		handleError(response, err)
 	}
-	URL := "http://127.0.0.0:8004/register"
-	resp, err := handleRequest(request, URL, "POST", postBody)
-	fmt.Println("--------err---------", resp)
+
+	_, err = handleRequest(response, request, backendRegisterRouter, "POST", postBody)
 	if err != nil {
-		fmt.Println("--------err---------", resp, err)
+		handleError(response, err)
 	}
-	redirectTarget := "/profile"
+	redirectTarget := frontendProfileinRouter
 	http.Redirect(response, request, redirectTarget, http.StatusFound)
 }
 
@@ -153,29 +174,25 @@ func loginHandler(response http.ResponseWriter, request *http.Request) {
 	if request.Method == "POST" {
 		username := request.FormValue("user_name")
 		pass := request.FormValue("password")
-		fmt.Println("-------request.FormValue--asd---------", request.Form)
-
 		body, _ := json.Marshal(map[string]string{
 			"user_name": username,
 			"password":  pass,
 		})
-		URL := "http://127.0.0.0:8004/login"
-		resp, err := handleRequest(request, URL, "POST", body)
-		fmt.Println("--------handleRequest---------------", resp, err)
-		redirectTarget := "/profile"
+		_, err := handleRequest(response, request, backendLoginRouter, "POST", body)
+		redirectTarget := frontendProfileinRouter
 		if err != nil {
-			redirectTarget = "/internal"
+			handleError(response, err)
+			redirectTarget = frontendInternalRouter
 		}
 		// .. check credentials ..
 		setSession(username, response)
-		fmt.Println("------Usernam--------", getUserName(request))
 		http.Redirect(response, request, redirectTarget, http.StatusFound)
 	}
 }
 
 func logoutHandler(response http.ResponseWriter, request *http.Request) {
 	clearSession(response)
-	http.Redirect(response, request, "/", http.StatusFound)
+	http.Redirect(response, request, frontendDefaultRouter, http.StatusFound)
 }
 
 func setSession(userName string, response http.ResponseWriter) {
@@ -212,7 +229,7 @@ func clearSession(response http.ResponseWriter) {
 	http.SetCookie(response, cookie)
 }
 
-func handleRequest(request *http.Request, URL string, method string, data []byte) (response string, err error) {
+func handleRequest(response http.ResponseWriter, request *http.Request, URL string, method string, data []byte) (resp_data string, err error) {
 
 	responseBody := bytes.NewBuffer(data)
 	client := &http.Client{}
@@ -222,7 +239,8 @@ func handleRequest(request *http.Request, URL string, method string, data []byte
 		return "", err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.SetBasicAuth("test", "test")
+	req.SetBasicAuth(basicAuthUsername, basicAuthPassowrd)
+	fmt.Println("Sending request to ", URL)
 	resp, err := client.Do(req)
 	//Handle Error
 	if err != nil {

@@ -9,16 +9,11 @@
 
         <div class="form-container sign-in-container">
             
-            <form action="{{.ProfileMethod}}" method="{{.ProfileAction}}">
-                <h1>User Profile</h1>
+            <form>
+                <h1>Error Occured</h1>
                 <span>Enter user profile details</span>
-                <input type="name" id="name" name="name" placeholder="Name">
-                <input type="telephone" id="telephone" name="telephone" placeholder="Telephone">
-                <input type="email" id="email" name="email" placeholder="Email">
-                <span></span>
-                <button type="submit">Save and Continue</button>
-                <span></span>
-                <button type="cancel">Cancel</button>
+                <span>{{.FormError}}</span>
+                <input type="button" value="Go Back" id="cancel" onclick="history.back(-1)" />
             </form>
         </div>
 
