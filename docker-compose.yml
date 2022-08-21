@@ -6,8 +6,6 @@ services:
     volumes:
       - ./db_data:/var/lib/mysql
     restart: always
-    ports:
-      - 6603:3306
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: post_api
@@ -18,3 +16,29 @@ services:
     restart: always
     ports:
       - 8080:8080
+  backend:
+    image: backend
+    build: 
+      dockerfile: Dockerfile
+      context: ./backend
+    container_name: go-backend
+    volumes:
+      - ./backend:/go/src/backend-reg
+    command: go run main.go
+    ports:
+      - 8004:8004
+    depends_on:
+      - db
+  frontend:
+    image: frontend
+    build: 
+      dockerfile: Dockerfile
+      context: ./frontend
+    container_name: go-frontend
+    volumes:
+      - ./frontend:/go/src/mux-test/test
+    command: go run main.go
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
