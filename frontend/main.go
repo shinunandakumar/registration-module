@@ -35,21 +35,6 @@ var (
 	backendProfileRouter  = fmt.Sprintf("%s/profile/", backendUrl)
 )
 
-func main() {
-
-	var router = mux.NewRouter()
-	router.HandleFunc(frontendDefaultRouter, indexPageHandler)
-	router.HandleFunc(frontendInternalRouter, internalPageHandler)
-	router.HandleFunc(frontendLoginRouter, loginHandler).Methods("POST")
-	router.HandleFunc(frontendSignupRouter, signupHandler).Methods("GET", "POST")
-	router.HandleFunc(frontendProfileinRouter, profileHandler).Methods("GET", "POST")
-	router.HandleFunc(frontendLogoutRouter, logoutHandler).Methods("GET", "POST")
-
-	http.Handle(frontendDefaultRouter, router)
-	fmt.Println("Port Listening:8000")
-	http.ListenAndServe(":8000", nil)
-}
-
 type UserData struct {
 	Name      string
 	Telephone string
@@ -65,6 +50,21 @@ type form_method struct {
 	ProfileMethod string
 	FormError     string
 	ProfileData   UserData
+}
+
+func main() {
+
+	var router = mux.NewRouter()
+	router.HandleFunc(frontendDefaultRouter, indexPageHandler)
+	router.HandleFunc(frontendInternalRouter, internalPageHandler)
+	router.HandleFunc(frontendLoginRouter, loginHandler).Methods("POST")
+	router.HandleFunc(frontendSignupRouter, signupHandler).Methods("GET", "POST")
+	router.HandleFunc(frontendProfileinRouter, profileHandler).Methods("GET", "POST")
+	router.HandleFunc(frontendLogoutRouter, logoutHandler).Methods("GET", "POST")
+
+	http.Handle(frontendDefaultRouter, router)
+	fmt.Println("Port Listening:8000")
+	http.ListenAndServe(":8000", nil)
 }
 
 func indexPageHandler(response http.ResponseWriter, request *http.Request) {
