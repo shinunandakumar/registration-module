@@ -9,7 +9,7 @@ import (
 
 func Conn() *sql.DB {
 
-	db, err := sql.Open("mysql", "post_api:post_api@tcp(127.0.0.1:6603)/post_api")
+	db, err := sql.Open("mysql", "post_api:post_api@tcp(db:3306)/post_api")
 
 	if err != nil {
 		log.Fatal(err)
