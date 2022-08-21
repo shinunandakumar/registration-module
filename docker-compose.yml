@@ -1,0 +1,20 @@
+version: "3"
+    
+services:
+  db:
+    image: mysql:5.7
+    volumes:
+      - ./db_data:/var/lib/mysql
+    restart: always
+    ports:
+      - 6603:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: post_api
+      MYSQL_USER: post_api
+      MYSQL_PASSWORD: post_api
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
