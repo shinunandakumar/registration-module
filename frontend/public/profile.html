@@ -12,7 +12,7 @@
             <form action="{{.ProfileAction}}" method="{{.ProfileMethod}}">
                 <h1>User Profile</h1>
                 <span>Enter user profile details</span>
-                {{ if .ProfileData}}{{.ProfileData}}
+                {{ if .ProfileData}}
                     <input type="name" id="name" name="name" required aria-required="true" value="{{.ProfileData.Name}}" placeholder="Name">
                     <input type="telephone" id="telephone" name="telephone" required aria-required="true" value="{{.ProfileData.Telephone}}" placeholder="Telephone">
                     <input type="email" id="email" name="email" required aria-required="true" value="{{.ProfileData.Email}}"  placeholder="Email">

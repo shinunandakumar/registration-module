@@ -12,5 +12,5 @@ type UserProfile struct {
 	Username string `json:"user_name,omitempty" `
 	Email    string `json:"email,omitempty" `
 	Name     string `json:"name,omitempty" `
-	Phone    string `json:"telephone,omitempty" `
+	Phone    string `json:"phone,omitempty" `
 }
